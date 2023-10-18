@@ -15,14 +15,14 @@ It is a model without spacial representation and collision, meaning that it does
 
 ## Plan
 ### 1st Milestone (20 November 2023, 12:00 AM)
-- Review of concepts and existing models.
+- Review of concepts and existing models
 - Understand the vision-based interaction approach and how it differs
-- General overview of the problem and general idea on how the problem will be approached.
+- General overview of the problem and general idea on how the problem will be approached
 - Summarize the various collective behaviors produced by the model
 
 ### 2nd Milestone (18 December 2023, 12:00 AM)
-- Polishing of the previous report based on the received comments.
-- Details about the methods and the proposed methodology for verification.
+- Polishing of the previous report based on the received comments
+- Details about the methods and the proposed methodology for verification
 - Choose a programming language/environment like Python or JavaScript
 - Decide on 2D vs 3D implementation
 - Select metrics to analyze like neighbor distance, collisions
