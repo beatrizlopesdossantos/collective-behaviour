@@ -1,6 +1,6 @@
 # collective-behaviour
 
-## Team members:
+## Team members
 - [Beatriz Lopes dos Santos](https://github.com/beatrizlopesdossantos)
 - [Juraj Kulich](https://github.com/jurajkulich)
 - [Ricardo Ferreira](https://github.com/rickyfer305)
