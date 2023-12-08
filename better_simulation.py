@@ -8,115 +8,90 @@ pygame.init()
 
 # Constants
 WIDTH, HEIGHT = 1200, 800
-FPS = 60
-NUM_BIRDS = 30
-VISION_RADIUS = 20
+BG_COLOR = (255, 255, 255)
+BIRD_COLOR = (0, 0, 0)
+VISION_COLOR = (200, 200, 200)
+NUM_BIRDS = 50
+VISION_ANGLE = 100
+VISION_RADIUS = 50
+TURN_SPEED = 0.1
 SPEED = 2
-BACKGROUND_COLOR = (173, 216, 230)
-VISION_COLOR = (255, 255, 0, 90)
 
 # Bird class
-class Bird(pygame.sprite.Sprite):
+class Bird:
     def __init__(self, x, y):
-        super().__init__()
-        self.image = pygame.Surface((10, 10))
-        self.image.fill((255, 255, 255))
-        self.image.set_colorkey((255, 255, 255))
-        pygame.draw.circle(self.image, (255, 255, 255), (5, 5), 5)
-        self.rect = self.image.get_rect(center=(x, y))
-        self.direction = random.uniform(0, 2 * math.pi)
+        self.x = x
+        self.y = y
+        self.angle = random.uniform(0, 2 * math.pi)
 
     def update(self, birds):
-        # Get flocking behaviors
-        alignment = self.align(birds)
-        cohesion = self.cohere(birds)
-        separation = self.separate(birds)
+        # Check for nearby birds in vision
+        nearby_birds = [b for b in birds if b != self and self.in_vision(b)]
 
-        # Combine behaviors
-        if alignment is not None and cohesion is not None and separation is not None:
-            angle = alignment
-        else:
-            angle = random.uniform(-0.1, 0.1)  # Random direction if no birds in vision
-            angle = self.direction + angle
+        if len(nearby_birds) != 0:
 
-        # Update position
-        self.direction = angle
-        self.rect.x += int(SPEED * math.cos(self.direction))
-        self.rect.y += int(SPEED * math.sin(self.direction))
-
-        # Wrap around screen
-        self.rect.x %= WIDTH
-        self.rect.y %= HEIGHT
-
-    def align(self, birds):
-        # Alignment: steer towards the average heading of neighbors
-        neighbors = [bird for bird in birds if bird != self and self.in_vision(bird)]
-        if neighbors:
-            avg_direction = sum([bird.direction for bird in neighbors]) / len(neighbors)
-            return avg_direction - self.direction
-        return None
-
-    def cohere(self, birds):
-        # Cohesion: steer towards the average position of neighbors
-        neighbors = [bird for bird in birds if bird != self and self.in_vision(bird)]
-        if neighbors:
             avg_position = (
-                sum([bird.rect.x for bird in neighbors]) / len(neighbors),
-                sum([bird.rect.y for bird in neighbors]) / len(neighbors),
+                sum([bird.x for bird in nearby_birds]) / len(nearby_birds),
+                sum([bird.y for bird in nearby_birds]) / len(nearby_birds),
             )
-            angle_to_avg = math.atan2(avg_position[1] - self.rect.y, avg_position[0] - self.rect.x)
-            return angle_to_avg - self.direction
-        return None
 
-    def separate(self, birds):
-        # Separation: avoid crowding neighbors
-        neighbors = [bird for bird in birds if bird != self and self.in_vision(bird)]
-        if neighbors:
-            separation_vector = [0, 0]
-            for bird in neighbors:
-                distance = math.hypot(bird.rect.x - self.rect.x, bird.rect.y - self.rect.y)
-                separation_vector[0] += (self.rect.x - bird.rect.x) / distance
-                separation_vector[1] += (self.rect.y - bird.rect.y) / distance
-            separation_angle = math.atan2(separation_vector[1], separation_vector[0])
-            return separation_angle - self.direction
-        return None
+            vector_x = avg_position[0] - self.x
+            vector_y = avg_position[1] - self.y
+            direction_radians = math.atan2(vector_y, vector_x)
+            self.angle = (direction_radians + 2 * math.pi) % (2 * math.pi)
+        
+        else:
+
+            self.angle += random.uniform(-TURN_SPEED, TURN_SPEED)
+
+        # Move forward
+        self.x = (self.x + SPEED * math.cos(self.angle)) % WIDTH
+        self.y = (self.y + SPEED * math.sin(self.angle)) % HEIGHT
 
     def in_vision(self, other_bird):
-        distance = math.hypot(other_bird.rect.x - self.rect.x, other_bird.rect.y - self.rect.y)
-        angle_to_other = math.atan2(other_bird.rect.y - self.rect.y, other_bird.rect.x - self.rect.x)
-        angle_difference = abs(angle_to_other - self.direction)
-        return 0 < distance < VISION_RADIUS and angle_difference < math.radians(150)
+        angle_to_other = math.atan2(other_bird.y - self.y, other_bird.x - self.x)
+        angle_diff = abs(angle_to_other - self.angle)
 
-# Initialize Pygame screen
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Flock of Birds")
-clock = pygame.time.Clock()
+        # Check if the other bird is within vision angle and radius
+        return angle_diff < math.radians(VISION_ANGLE / 2) and math.hypot(
+            other_bird.x - self.x, other_bird.y - self.y
+        ) < VISION_RADIUS
 
 # Create birds
-birds = pygame.sprite.Group()
-for _ in range(NUM_BIRDS):
-    bird = Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT))
-    birds.add(bird)
+birds = [Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(NUM_BIRDS)]
 
 # Main loop
-running = True
-while running:
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Flock of Birds")
+
+while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            pygame.quit()
+            sys.exit()
 
-    screen.fill(BACKGROUND_COLOR)
-
-    # Update and draw birds
+    # Update bird positions
     for bird in birds:
         bird.update(birds)
-        # Draw vision area
-        pygame.draw.circle(screen, VISION_COLOR, bird.rect.center, VISION_RADIUS, 1)
-        # Draw bird
-        screen.blit(bird.image, bird.rect.topleft)
+
+    # Draw background
+    screen.fill(BG_COLOR)
+
+    # Draw birds and their vision
+    for bird in birds:
+        pygame.draw.circle(screen, BIRD_COLOR, (int(bird.x), int(bird.y)), 5)
+        vision_end_x = bird.x + VISION_RADIUS * math.cos(bird.angle + 0.75 * math.pi)
+        vision_end_y = bird.y + VISION_RADIUS * math.sin(bird.angle + 0.75 * math.pi)
+        pygame.draw.line(screen, VISION_COLOR, (bird.x, bird.y), (vision_end_x, vision_end_y))
+        vision_end_x = bird.x + VISION_RADIUS * math.cos(bird.angle - 0.75 * math.pi)
+        vision_end_y = bird.y + VISION_RADIUS * math.sin(bird.angle - 0.75 * math.pi)
+        pygame.draw.line(screen, VISION_COLOR, (bird.x, bird.y), (vision_end_x, vision_end_y))
+        pygame.draw.arc(screen, 
+                        VISION_COLOR, 
+                        pygame.Rect(bird.x - VISION_RADIUS, bird.y - VISION_RADIUS, VISION_RADIUS*2, VISION_RADIUS*2), 
+                        bird.angle - 0.75 * math.pi, 
+                        bird.angle + 0.75 * math.pi,
+                        1)
 
     pygame.display.flip()
-    clock.tick(FPS)
-
-pygame.quit()
-sys.exit()
+    pygame.time.Clock().tick(30)
