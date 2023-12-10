@@ -8,7 +8,7 @@ pygame.init()
 
 # Constants
 WIDTH, HEIGHT = 1500, 800
-BG_COLOR = (255, 255, 255)
+BG_COLOR = (180, 230, 255)
 BIRD_COLOR = (0, 0, 0)
 VISION_COLOR = (200, 200, 200)
 NUM_BIRDS = 50
@@ -59,7 +59,7 @@ birds = [Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in rang
 
 # Main loop
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Flock of Birds")
+pygame.display.set_caption("Birds orientation based purely on their vision")
 
 while True:
     for event in pygame.event.get():
