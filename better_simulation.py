@@ -12,8 +12,8 @@ BG_COLOR = (180, 230, 255)
 BIRD_COLOR = (0, 0, 0)
 VISION_COLOR = (255, 255, 255)
 NUM_BIRDS = 10
-VISION_ANGLE = 360
-VISION_RADIUS = 30
+VISION_ANGLE = 320
+VISION_RADIUS = 80
 VISION_ANGLE_RAD = VISION_ANGLE * math.pi / 180
 
 # A higher ALPHA_0 will lead to a stronger acceleration effect from birds in a bird's field of vision.
@@ -82,7 +82,23 @@ class Bird:
     def draw(self, screen):
         pygame.draw.circle(screen, BIRD_COLOR, (int(bird.x), int(bird.y)), 5)
         # Vision field
-        # pygame.draw.circle(screen, BIRD_COLOR, (int(bird.x), int(bird.y)), VISION_RADIUS, 1)
+        if VISION_ANGLE == 360:
+            pygame.draw.circle(screen, BIRD_COLOR, (int(bird.x), int(bird.y)), VISION_RADIUS, 1)
+        else:
+            x = VISION_ANGLE / 360
+            vision_end_x = bird.x + VISION_RADIUS * math.cos(bird.angle + x * math.pi)
+            vision_end_y = bird.y + VISION_RADIUS * math.sin(bird.angle + x * math.pi)
+            pygame.draw.line(screen, VISION_COLOR, (bird.x, bird.y), (vision_end_x, vision_end_y))
+            vision_end_x = bird.x + VISION_RADIUS * math.cos(bird.angle - x * math.pi)
+            vision_end_y = bird.y + VISION_RADIUS * math.sin(bird.angle - x * math.pi)
+            pygame.draw.line(screen, VISION_COLOR, (bird.x, bird.y), (vision_end_x, vision_end_y))
+            tmp = -1 * bird.angle
+            pygame.draw.arc(screen, 
+                            VISION_COLOR, 
+                            pygame.Rect(bird.x - VISION_RADIUS, bird.y - VISION_RADIUS, VISION_RADIUS*2, VISION_RADIUS*2), 
+                            (tmp - x * math.pi + math.pi * 2 ) % (2 * math.pi),
+                            (tmp + x * math.pi + math.pi * 2 ) % (2 * math.pi), 
+                            1)
 
 # Create birds
 birds = [Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT))
