@@ -2,3 +2,5 @@ Adding predator
  - add a Bird class an attribut if is a predator
  - add predator's behavoiur
  - add velocity change for birds when near to predator
+ - add a union for alcohlism
+ - collisions/without colisions
