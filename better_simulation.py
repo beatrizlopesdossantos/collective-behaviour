@@ -10,11 +10,11 @@ pygame.init()
 WIDTH, HEIGHT = 1500, 800
 BG_COLOR = (180, 230, 255)
 BIRD_COLOR = (0, 0, 0)
-VISION_COLOR = (200, 200, 200)
-NUM_BIRDS = 50
+VISION_COLOR = (255, 255, 255)
+NUM_BIRDS = 20
 VISION_ANGLE = 100
-VISION_RADIUS = 30
-TURN_SPEED = 0.3
+VISION_RADIUS = 50
+TURN_SPEED = 0.1
 SPEED = 2
 
 # Bird class
@@ -94,4 +94,4 @@ while True:
 
 
     pygame.display.flip()
-    pygame.time.Clock().tick(30)
+    pygame.time.Clock().tick(150)
