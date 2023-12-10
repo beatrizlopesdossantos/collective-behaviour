@@ -17,9 +17,9 @@ VISION_RADIUS = 30
 VISION_ANGLE_RAD = VISION_ANGLE * math.pi / 180
 
 # A higher ALPHA_0 will lead to a stronger acceleration effect from birds in a bird's field of vision.
-ALPHA_0 = 1
+ALPHA_0 = 0.1
 # A BETA _0 value of -1 makes birds turn away from the side where more birds are present, potentially dispersing the flock.
-BETA_0 = -1
+BETA_0 = 1
 # A GAMMA value of 1.5 can rapidly slow birds down to their preferred speed, possibly leading to a more 
 # ordered and less erratic flock movement.
 GAMMA = 0.05
