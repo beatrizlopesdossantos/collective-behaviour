@@ -100,7 +100,7 @@ def draw_circles_and_line(circle1, circle2, circle3):
 
 
 def draw_flock(circles):
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
 
     circle = circles[0]
 
@@ -126,14 +126,13 @@ def draw_flock(circles):
 
     ax.plot()
 
-
     ax.set_aspect('equal', adjustable='datalim')
     plt.grid(True)
     plt.show()
 
 
 def main(num_of_units=10):
-    # generate 10 random circles
+    
     circles = []
     i = 0
     while (i < num_of_units):
@@ -141,10 +140,8 @@ def main(num_of_units=10):
         radius = np.random.randint(4, 8)
         acceptable = True
         for c in circles:
-            if (is_inside(c, Point(center.x * 1.5, center.y * 1.5 - radius)) or
-                is_inside(c, Point(center.x * 1.5, center.y * 1.5 + radius)) or
-                is_inside(c, Point(center.x * 1.5 + radius, center.y * 1.5)) or
-                is_inside(c, Point(center.x * 1.5 - radius, center.y * 1.5))):
+            dist = distance(c.center, center)
+            if (dist < (c.radius + radius)):
                 acceptable = False
                 break
         if acceptable:    
@@ -160,4 +157,4 @@ def main(num_of_units=10):
         print(ci.center.x, ci.center.y, ci.radius)
     draw_flock(circles)
 
-main()
+main(15)
