@@ -48,20 +48,14 @@ def is_in_vision(circle1, circle2, circle3):
     counter = 0
     for i, vec in enumerate(vectors):
         end = Point(circle1.center.x + vec[0], circle1.center.y + vec[1])
-        print("vector: ", vec)
-        print(f"{i}th end: ({end.x}, {end.y})")
-        print(abs(end.x - circle1.center.x), abs(points_on_circle2[i].x - circle1.center.x), abs(end.y - circle1.center.y), abs(points_on_circle2[i].y - circle1.center.y), sep="   ")
         if (abs(end.x - circle1.center.x) == abs(points_on_circle2[i].x - circle1.center.x) or
             abs(end.y - circle1.center.y) == abs(points_on_circle2[i].y - circle1.center.y)):
             counter += 1
-            print("+1")
             continue
         while (abs(end.x - circle1.center.x) < abs(points_on_circle2[i].x - circle1.center.x) and 
                abs(end.y - circle1.center.y) < abs(points_on_circle2[i].y - circle1.center.y)):
-            print(f"end: ({end.x}, {end.y}")
             if is_inside(circle3, end):
                 counter += 1
-                print("+1")
                 break
             end = Point(end.x + vec[0], end.y + vec[1])
 
@@ -104,15 +98,66 @@ def draw_circles_and_line(circle1, circle2, circle3):
     plt.grid(True)
     plt.show()
 
-def main():
-    circle1 = Circle(Point(0, 0), 5)
-    circle2 = Circle(Point(50, 30), 20)
-    circle3 = Circle(Point(20, 10), 8)
+
+def draw_flock(circles):
+    fig, ax = plt.subplots()
+
+    circle = circles[0]
+
+    circle_patch = plt.Circle((circle.center.x, circle.center.y), circle.radius, color="blue", fill=True)
+    ax.add_patch(circle_patch)
+
+    visible = False
+
+    for j, other_circle in enumerate(circles[1:]):
+
+        for k, obstacle in enumerate(circles[1:]):
+            if j == k:
+                continue
+            if not is_in_vision(circle, other_circle, obstacle):
+                print(f"Circle ({circle.center.x}, {circle.center.y}) does not see circle ({circles[j+1].center.x}, {circles[j+1].center.y}) because of ({circles[k+1].center.x}, {circles[k+1].center.y})")
+                visible = False
+                break
+            visible = True
+
+        color = 'green' if visible else 'red'
+        circle_patch = plt.Circle((other_circle.center.x, other_circle.center.y), other_circle.radius, color=color, fill=True)
+        ax.add_patch(circle_patch)
+
+    ax.plot()
+
+
+    ax.set_aspect('equal', adjustable='datalim')
+    plt.grid(True)
+    plt.show()
+
+
+def main(num_of_units=10):
+    # generate 10 random circles
+    circles = []
+    i = 0
+    while (i < num_of_units):
+        center = Point(np.random.randint(0, 150), np.random.randint(0, 100))
+        radius = np.random.randint(4, 8)
+        acceptable = True
+        for c in circles:
+            if (is_inside(c, Point(center.x * 1.5, center.y * 1.5 - radius)) or
+                is_inside(c, Point(center.x * 1.5, center.y * 1.5 + radius)) or
+                is_inside(c, Point(center.x * 1.5 + radius, center.y * 1.5)) or
+                is_inside(c, Point(center.x * 1.5 - radius, center.y * 1.5))):
+                acceptable = False
+                break
+        if acceptable:    
+            circles.append(Circle(center, radius))
+            print("o", end="")
+            i += 1
 
     # Check if any of the four points on circle2 intersects with circle3
-    result = is_in_vision(circle1, circle2, circle3)
+    # result = is_in_vision(circle1, circle2, circle3)
+    # print("Does it see the other disc?", result)
 
-    print("Does it see the other disc?", result)
-    draw_circles_and_line(circle1, circle2, circle3)
+    for ci in circles:
+        print(ci.center.x, ci.center.y, ci.radius)
+    draw_flock(circles)
 
 main()
