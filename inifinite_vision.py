@@ -19,8 +19,19 @@ def distance(point1, point2):
 def is_inside(circle, point):
     return distance(circle.center, point) <= circle.radius
 
-def line_circle_intersection(circle1, circle2, circle3):
-    
+def is_in_vision(circle1, circle2, circle3):
+    """
+    Check if one object is in vision of other.
+
+    Parameters:
+    - circle1 (Circle): Object with a vision.
+    - circle2 (Circle): Target object.
+    - circle3 (Circle): Obstacle.
+
+    Returns:
+    bool: True if circle2 is in vision of circle1.
+    """
+
     points_on_circle2 = []
     for i in range(8):
         angle = (2 * math.pi / 8) * i
@@ -99,7 +110,7 @@ def main():
     circle3 = Circle(Point(20, 10), 8)
 
     # Check if any of the four points on circle2 intersects with circle3
-    result = line_circle_intersection(circle1, circle2, circle3)
+    result = is_in_vision(circle1, circle2, circle3)
 
     print("Does it see the other disc?", result)
     draw_circles_and_line(circle1, circle2, circle3)
