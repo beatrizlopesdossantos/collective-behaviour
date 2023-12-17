@@ -3,28 +3,29 @@ import math
 import random
 
 # Constants
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 1200, 800
 BG_COLOR = (255, 255, 255)
 BIRD_COLOR = (0, 0, 0)
-NUM_BIRDS = 50
+NUM_BIRDS = 30
 BL = 10  # Body length/diameter of each bird
-DELTA_T = 2.0  # Time step for updating positions
-ALPHA_0 = 2 # Acceleration coefficient for separation/cohesion
-BETA_0 = 0.01  # Angular velocity coefficient for alignment
-ALPHA_1 = 0.2  # Acceleration coefficient for adapting to spatial gradient velocity 
-BETA_1 = 0.2  # Angular velocity coefficient for adapting to the angular gradient 
-MAX_SPEED = 5
+DELTA_T = 0.1  # Time step for updating positions
+
+ALPHA_0 = 20 # Acceleration coefficient for separation/cohesion
+BETA_0 = 20 # Angular velocity coefficient for alignment
+ALPHA_1 = 10 # Acceleration coefficient for adapting to spatial gradient velocity 
+BETA_1 = 10 # Angular velocity coefficient for adapting to the angular gradient 
+MAX_SPEED = 3
 
 
 class Bird:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.v = 20  # Initial velocity
+        self.v = 2 # Initial velocity
         self.angle = random.uniform(0, 2 * math.pi)
         self.bl = BL
         self.radius = BL / 2
-        self.speed = 2  # Initial speed
+        self.speed = 1 # Initial speed
 
 
     def update(self, birds):
@@ -71,8 +72,8 @@ class Bird:
         self.y += math.sin(self.angle) * self.speed
         
         # Wrap-around the screen
-        self.x %= (WIDTH - 10)
-        self.y %= (HEIGHT - 10)
+        self.x %= WIDTH
+        self.y %= HEIGHT
 
     def distance_to(self, other):
         dx = other.x - self.x
@@ -102,8 +103,21 @@ class Bird:
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Flocking Simulation")
 
+kkt = 125
 # Create a set of birds
-birds = [Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(NUM_BIRDS)]
+center_x, center_y = WIDTH // 2, HEIGHT // 2
+birds = []
+for _ in range(NUM_BIRDS):
+    while True:
+        new_x = center_x + random.uniform(-kkt, kkt)
+        new_y = center_y + random.uniform(-kkt, kkt)
+        
+        # Check if the new position is not already taken
+        if (new_x, new_y) not in [(b.x, b.y) for b in birds]:
+            break
+
+    birds.append(Bird(new_x, new_y))
+# birds = [Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(NUM_BIRDS)]
 
 running = True
 clock = pygame.time.Clock()
