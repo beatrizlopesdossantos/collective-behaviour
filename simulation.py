@@ -3,29 +3,31 @@ import math
 import random
 
 # Constants
-WIDTH, HEIGHT = 1200, 800
+WIDTH, HEIGHT = 800, 600
 BG_COLOR = (255, 255, 255)
+TAIL_COLOR = (255, 165, 0)
 BIRD_COLOR = (0, 0, 0)
-NUM_BIRDS = 30
+NUM_BIRDS = 50
 BL = 10  # Body length/diameter of each bird
-DELTA_T = 0.1  # Time step for updating positions
-
-ALPHA_0 = 20 # Acceleration coefficient for separation/cohesion
-BETA_0 = 20 # Angular velocity coefficient for alignment
-ALPHA_1 = 10 # Acceleration coefficient for adapting to spatial gradient velocity 
-BETA_1 = 10 # Angular velocity coefficient for adapting to the angular gradient 
-MAX_SPEED = 3
+DELTA_T = 2.0  # Time step for updating positions
+ALPHA_0 = 2 # Acceleration coefficient for separation/cohesion
+BETA_0 = 0.01  # Angular velocity coefficient for alignment
+ALPHA_1 = 0.2  # Acceleration coefficient for adapting to spatial gradient velocity 
+BETA_1 = 0.2  # Angular velocity coefficient for adapting to the angular gradient 
+MAX_SPEED = 5
+MAX_TAIL_LENGTH = 35 
 
 
 class Bird:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.v = 2 # Initial velocity
+        self.v = 20  # Initial velocity
         self.angle = random.uniform(0, 2 * math.pi)
         self.bl = BL
         self.radius = BL / 2
-        self.speed = 1 # Initial speed
+        self.speed = 2  # Initial speed
+        self.tail = []
 
 
     def update(self, birds):
@@ -72,9 +74,58 @@ class Bird:
         self.y += math.sin(self.angle) * self.speed
         
         # Wrap-around the screen
-        self.x %= WIDTH
-        self.y %= HEIGHT
+        self.x %= (WIDTH - 10)
+        self.y %= (HEIGHT - 10)
 
+        dynamic_tail_length = int(self.speed / MAX_SPEED * MAX_TAIL_LENGTH)
+        self.tail.insert(0, (self.x, self.y))
+
+        # Remove the last tail point if the tail is too long
+        if len(self.tail) > dynamic_tail_length:
+            self.tail.pop()
+
+    def draw_tail(self, screen):
+        # Draw the clipped tail with a thicker line and fading effect
+        if len(self.tail) > 1:
+            tail_segments = list(zip(self.tail[:-1], self.tail[1:]))
+            num_segments = min(len(tail_segments), MAX_TAIL_LENGTH)
+
+            for i in range(num_segments):
+                # Clip the tail segments at the screen boundaries
+                t = i / num_segments
+
+                start_point = (
+                    max(0, min(WIDTH - 1, int(tail_segments[i][0][0]))),
+                    max(0, min(HEIGHT - 1, int(tail_segments[i][0][1])))
+                )
+                end_point = (
+                    max(0, min(WIDTH - 1, int(tail_segments[i][1][0]))),
+                    max(0, min(HEIGHT - 1, int(tail_segments[i][1][1])))
+                )
+
+                if abs(start_point[0] - end_point[0]) > WIDTH / 2:
+                    if start_point[0] < end_point[0]:
+                        end_point = (end_point[0] - WIDTH, end_point[1])
+                    else:
+                        end_point = (end_point[0] + WIDTH, end_point[1])
+
+                # Check for vertical screen wrapping and adjust the drawing
+                if abs(start_point[1] - end_point[1]) > HEIGHT / 2:
+                    if start_point[1] < end_point[1]:
+                        end_point = (end_point[0], end_point[1] - HEIGHT)
+                    else:
+                        end_point = (end_point[0], end_point[1] + HEIGHT)
+                        
+                gradient_color = (
+                    int((1 - t) * (200 - 255) + TAIL_COLOR[0]),
+                    int((1 - t) * (200 - 165) + TAIL_COLOR[1]),
+                    int((1 - t) * (200 - 0) + TAIL_COLOR[2]),
+                )
+                thickness = int(5 * (1 - t))
+
+                # Draw a line with the calculated thickness
+                pygame.draw.line(screen, gradient_color, start_point, end_point, thickness)
+                
     def distance_to(self, other):
         dx = other.x - self.x
         dy = other.y - self.y
@@ -103,21 +154,8 @@ class Bird:
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Flocking Simulation")
 
-kkt = 125
 # Create a set of birds
-center_x, center_y = WIDTH // 2, HEIGHT // 2
-birds = []
-for _ in range(NUM_BIRDS):
-    while True:
-        new_x = center_x + random.uniform(-kkt, kkt)
-        new_y = center_y + random.uniform(-kkt, kkt)
-        
-        # Check if the new position is not already taken
-        if (new_x, new_y) not in [(b.x, b.y) for b in birds]:
-            break
-
-    birds.append(Bird(new_x, new_y))
-# birds = [Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(NUM_BIRDS)]
+birds = [Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(NUM_BIRDS)]
 
 running = True
 clock = pygame.time.Clock()
@@ -133,6 +171,7 @@ while running:
     # Update and draw all birds
     for bird in birds:
         bird.update(birds)
+        bird.draw_tail(screen)  # Draw the bird tail
         bird.draw(screen)
 
     pygame.display.flip()
