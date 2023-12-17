@@ -1,117 +1,195 @@
 import pygame
-import sys
-import random
 import math
-
-# Initialize Pygame
-pygame.init()
+import random
 
 # Constants
-WIDTH, HEIGHT = 800, 600
-BG_COLOR = (180, 230, 255)
+WIDTH, HEIGHT = 900, 600
+BG_COLOR = (255, 255, 255)
+TAIL_COLOR = (255, 165, 0)
 BIRD_COLOR = (0, 0, 0)
-VISION_COLOR = (255, 255, 255)
-NUM_BIRDS = 10
-VISION_ANGLE = 360
-VISION_RADIUS = 30
-VISION_ANGLE_RAD = VISION_ANGLE * math.pi / 180
+NUM_BIRDS = 50
+BL = 5  # Body length/diameter of each bird
+DELTA_T = 0.1  # Time step for updating positions
 
-# A higher ALPHA_0 will lead to a stronger acceleration effect from birds in a bird's field of vision.
-ALPHA_0 = 0.1
-# A BETA _0 value of -1 makes birds turn away from the side where more birds are present, potentially dispersing the flock.
-BETA_0 = 1
-# A GAMMA value of 1.5 can rapidly slow birds down to their preferred speed, possibly leading to a more 
-# ordered and less erratic flock movement.
-GAMMA = 0.05
-# DELTA_T controls the granularity of time in the simulation; a value too high might 
-# lead to instability or unrealistic behavior, while a value too low could lead to a very slow-running simulation. 
-# 0.1 is typically a balanced choice to ensure smooth behavior in real time.
-DELTA_T = 0.1
-v0 = 2
+ALPHA_0 = 0.2 # Acceleration coefficient for separation/cohesion
+BETA_0 = 0.001 # Angular velocity coefficient for alignment
+ALPHA_1 = 0.08 # Acceleration coefficient for adapting to spatial gradient velocity 
+BETA_1 = 0.08 # Angular velocity coefficient for adapting to the angular gradient 
+MAX_SPEED = 5
+MAX_TAIL_LENGTH = 35
 
-# Bird class
+
 class Bird:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.v = v0
+        self.v = 2 # Initial velocity
         self.angle = random.uniform(0, 2 * math.pi)
+        self.bl = BL
+        self.radius = 1000
+        self.speed = 2  # Initial speed
+        self.tail = []
+
 
     def update(self, birds):
-        left_count = 0
-        right_count = 0
-        front_count = 0
+        # Initialize the change in speed and heading
+        dspeed = 0
+        dangle = 0
         
-        # Count birds in different vision areas
-        for other in birds:
-            if other != self and self.in_vision(other):
-                angle_to_other = self.relative_angle(other)
-                if -math.pi / 2 <= angle_to_other < math.pi / 2:
-                    front_count += 1
-                if angle_to_other < 0:
-                    left_count += 1
-                else:
-                    right_count += 1
+        # Distance and angle differences to other birds
+        distances = [self.distance_to(other) for other in birds if other != self]
+        angle_diffs = [(math.atan2(other.y - self.y, other.x - self.x) - self.angle) % (2*math.pi) for other in birds if other != self]
         
-        # Equation for velocity (speed) change
-        dv = ALPHA_0 * front_count - GAMMA * (self.v - v0)
-        self.v += dv * DELTA_T
+        for dist, angle_diff in zip(distances, angle_diffs):
+            if angle_diff > math.pi:
+                angle_diff -= 2 * math.pi  # Wrap the angle to [-pi, pi]
 
-        # Equation for orientation (angle) change
-        dpsi = BETA_0 * (right_count - left_count)
-        self.angle += dpsi * DELTA_T
-        self.angle = (self.angle + 2 * math.pi) % (2 * math.pi)  # Normalize the angle
+            # Separate from birds that are too close
+            if dist < self.radius * 2:
+                dspeed -= ALPHA_0 / dist
+                dangle -= BETA_0 * angle_diff / dist
+            
+            # Cohere towards birds that are at an ideal distance
+            elif dist < self.radius * 4:
+                dspeed += ALPHA_0 / dist
+                dangle += BETA_0 * angle_diff / dist
+        
+        # Compute spatial gradient based on the average speed.
+        avg_speed = sum(other.speed for other in birds if other != self) / (len(birds) - 1)
+        spatial_grad = avg_speed - self.speed
+        
+        # Compute angular gradient based on the average angle.
+        avg_angle = sum(angle_diffs) / len(angle_diffs) if angle_diffs else 0
+        angular_grad = avg_angle - self.angle
+        
+        # Apply the adaptive coefficients
+        dspeed += ALPHA_1 * spatial_grad
+        dangle += BETA_1 * angular_grad
 
-        # Move forward based on the new speed and direction
-        self.x = (self.x + self.v * math.cos(self.angle)) % WIDTH
-        self.y = (self.y + self.v * math.sin(self.angle)) % HEIGHT
+        # Cap the speed to a maximum value to maintain control
+        self.speed = min(self.speed + dspeed * DELTA_T, MAX_SPEED)
+        self.angle += dangle * DELTA_T
+        self.angle += self.normalize_angle(dangle * DELTA_T)
+        
+        # Update position with the adjusted speed and angle
+        self.x += math.cos(self.angle) * self.speed
+        self.y += math.sin(self.angle) * self.speed
+        
+        # Wrap-around the screen
+        self.x %= WIDTH
+        self.y %= HEIGHT
 
-    def in_vision(self, other):
-        distance = math.hypot(other.x - self.x, other.y - self.y)
-        angle_to_other = self.relative_angle(other)
-        return (distance <= VISION_RADIUS and
-                -VISION_ANGLE_RAD / 2 <= angle_to_other <= 
-                VISION_ANGLE_RAD / 2)
+        dynamic_tail_length = int(self.speed / MAX_SPEED * MAX_TAIL_LENGTH)
+        self.tail.insert(0, (self.x, self.y))
 
-    def relative_angle(self, other):
+        # Remove the last tail point if the tail is too long
+        if len(self.tail) > dynamic_tail_length:
+            self.tail.pop()
+
+    def draw_tail(self, screen):
+        # Draw the clipped tail with a thicker line and fading effect
+        if len(self.tail) > 1:
+            tail_segments = list(zip(self.tail[:-1], self.tail[1:]))
+            num_segments = min(len(tail_segments), MAX_TAIL_LENGTH)
+
+            for i in range(num_segments):
+                # Clip the tail segments at the screen boundaries
+                t = i / num_segments
+
+                start_point = (
+                    max(0, min(WIDTH - 1, int(tail_segments[i][0][0]))),
+                    max(0, min(HEIGHT - 1, int(tail_segments[i][0][1])))
+                )
+                end_point = (
+                    max(0, min(WIDTH - 1, int(tail_segments[i][1][0]))),
+                    max(0, min(HEIGHT - 1, int(tail_segments[i][1][1])))
+                )
+
+                if abs(start_point[0] - end_point[0]) > WIDTH / 2:
+                    if start_point[0] < end_point[0]:
+                        end_point = (end_point[0] - WIDTH, end_point[1])
+                    else:
+                        end_point = (end_point[0] + WIDTH, end_point[1])
+
+                # Check for vertical screen wrapping and adjust the drawing
+                if abs(start_point[1] - end_point[1]) > HEIGHT / 2:
+                    if start_point[1] < end_point[1]:
+                        end_point = (end_point[0], end_point[1] - HEIGHT)
+                    else:
+                        end_point = (end_point[0], end_point[1] + HEIGHT)
+                        
+                gradient_color = (
+                    int((1 - t) * (200 - 255) + TAIL_COLOR[0]),
+                    int((1 - t) * (200 - 165) + TAIL_COLOR[1]),
+                    int((1 - t) * (200 - 0) + TAIL_COLOR[2]),
+                )
+                thickness = int(5 * (1 - t))
+
+                # Draw a line with the calculated thickness
+                pygame.draw.line(screen, gradient_color, start_point, end_point, thickness)
+                
+    def distance_to(self, other):
         dx = other.x - self.x
         dy = other.y - self.y
-        angle_to_other = math.atan2(dy, dx)
-        return (angle_to_other - self.angle + math.pi) % (2 * math.pi) - math.pi
+        return math.sqrt(dx * dx + dy * dy)
     
+    @staticmethod
+    def normalize_angle(angle):
+        # Normalize angle to be between -pi and pi
+        while angle <= -math.pi:
+            angle += 2 * math.pi
+        while angle > math.pi:
+            angle -= 2 * math.pi
+        return angle
+    
+    def move(self):
+        self.x += self.v * math.cos(self.angle) * DELTA_T
+        self.y += self.v * math.sin(self.angle) * DELTA_T
+        self.x %= WIDTH
+        self.y %= HEIGHT
+
     def draw(self, screen):
-        pygame.draw.circle(screen, BIRD_COLOR, (int(bird.x), int(bird.y)), 5)
-        # Vision field
-        # pygame.draw.circle(screen, BIRD_COLOR, (int(bird.x), int(bird.y)), VISION_RADIUS, 1)
+        # Draw bird as a circle with radius = BL / 2
+        pygame.draw.circle(screen, BIRD_COLOR, (int(self.x), int(self.y)), self.bl // 2)
 
-# Create birds
-birds = [Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT))
-         for _ in range(NUM_BIRDS)]
-
-# Main simulation loop
+# Set up the Pygame screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Flocking Simulation")
 
-# Game loop
+margin = 125
+# Create a set of birds
+center_x, center_y = WIDTH // 2, HEIGHT // 2
+birds = []
+for _ in range(NUM_BIRDS):
+    while True:
+        new_x = center_x + random.uniform(-margin, margin)
+        new_y = center_y + random.uniform(-margin, margin)
+        
+        # Check if the new position is not already taken
+        if (new_x, new_y) not in [(b.x, b.y) for b in birds]:
+            break
+
+    birds.append(Bird(new_x, new_y))
+# birds = [Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(NUM_BIRDS)]
+
 running = True
+clock = pygame.time.Clock()
+
+# Main loop
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
-    # Update bird positions
-    for bird in birds:
-        bird.update(birds)
-
-    # Draw background
+    
     screen.fill(BG_COLOR)
 
-    # Draw birds and their fields of vision
+    # Update and draw all birds
     for bird in birds:
+        bird.update(birds)
+        bird.draw_tail(screen)  # Draw the bird tail
         bird.draw(screen)
 
     pygame.display.flip()
-    pygame.time.Clock().tick(30)
+    clock.tick(30)
 
 pygame.quit()
-sys.exit()
