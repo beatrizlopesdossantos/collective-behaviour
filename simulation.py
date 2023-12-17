@@ -3,19 +3,19 @@ import math
 import random
 
 # Constants
-WIDTH, HEIGHT = 1200, 800
+WIDTH, HEIGHT = 900, 600
 BG_COLOR = (255, 255, 255)
 TAIL_COLOR = (255, 165, 0)
 BIRD_COLOR = (0, 0, 0)
-NUM_BIRDS = 30
-BL = 10  # Body length/diameter of each bird
+NUM_BIRDS = 50
+BL = 5  # Body length/diameter of each bird
 DELTA_T = 0.1  # Time step for updating positions
 
-ALPHA_0 = 1000 # Acceleration coefficient for separation/cohesion
-BETA_0 = 20 # Angular velocity coefficient for alignment
-ALPHA_1 = 10 # Acceleration coefficient for adapting to spatial gradient velocity 
-BETA_1 = 10 # Angular velocity coefficient for adapting to the angular gradient 
-MAX_SPEED = 15
+ALPHA_0 = 0.2 # Acceleration coefficient for separation/cohesion
+BETA_0 = 0.001 # Angular velocity coefficient for alignment
+ALPHA_1 = 0.08 # Acceleration coefficient for adapting to spatial gradient velocity 
+BETA_1 = 0.08 # Angular velocity coefficient for adapting to the angular gradient 
+MAX_SPEED = 5
 MAX_TAIL_LENGTH = 35
 
 
@@ -26,8 +26,8 @@ class Bird:
         self.v = 2 # Initial velocity
         self.angle = random.uniform(0, 2 * math.pi)
         self.bl = BL
-        self.radius = BL / 2
-        self.speed = 5  # Initial speed
+        self.radius = 1000
+        self.speed = 2  # Initial speed
         self.tail = []
 
 
