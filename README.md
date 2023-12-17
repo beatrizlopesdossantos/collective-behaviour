@@ -1,5 +1,5 @@
 # Model of collective behavior based purely on vision
-![Simulation](simulation.gif)
+![Simulation](images/simulation.gif)
 
 ## Team members
 - [Beatriz Lopes dos Santos](https://github.com/beatrizlopesdossantos)
