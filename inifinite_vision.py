@@ -94,7 +94,7 @@ def draw_circles_and_line(circle1, circle2, circle3):
     ax.scatter(*zip(*[(point.x, point.y) for point in points_on_circle2]), color='black', label='Points on C2')
 
     ax.set_aspect('equal', adjustable='datalim')
-    ax.legend()
+    #ax.legend()
     plt.grid(True)
     plt.show()
 
@@ -155,6 +155,10 @@ def main(num_of_units=10):
 
     for ci in circles:
         print(ci.center.x, ci.center.y, ci.radius)
-    draw_flock(circles)
+    #draw_flock(circles)
+    circles[0] = Circle(Point(50, 50), 10)
+    circles[1] = Circle(Point(100, 90), 10)
+    circles[2] = Circle(Point(80, 63), 12)
+    draw_circles_and_line(circles[0], circles[1], circles[2])
 
-main(15)
+main(10)
