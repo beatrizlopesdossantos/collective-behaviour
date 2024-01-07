@@ -39,7 +39,7 @@ class Bird:
             nearby_birds = [other for other in birds if other != self and self.distance_to(other) < 2 * self.radius]
             
             if not nearby_birds:
-                nearby_birds = birds[0]
+                nearby_birds = [birds[0]]
 
             avg_position = [sum(other.x for other in nearby_birds) / len(nearby_birds),
                             sum(other.y for other in nearby_birds) / len(nearby_birds)]
