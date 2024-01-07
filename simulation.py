@@ -26,7 +26,7 @@ class Bird:
         self.v = 2 # Initial velocity
         self.angle = random.uniform(0, 2 * math.pi)
         self.bl = BL
-        self.radius = 1000
+        self.radius = 200
         self.speed = 2  # Initial speed
         self.tail = []
         self.predator = False
@@ -46,7 +46,7 @@ class Bird:
             dspeed = ALPHA_1 * (MAX_SPEED - self.speed)
 
             # Cap the speed to a maximum value to maintain control
-            self.speed = min(self.speed + dspeed * DELTA_T, MAX_SPEED)
+            self.speed = min(self.speed + dspeed * DELTA_T, MAX_SPEED + 1)
             self.angle += dangle * DELTA_T
             self.angle += self.normalize_angle(dangle * DELTA_T)
 
@@ -55,6 +55,31 @@ class Bird:
             self.y += math.sin(self.angle) * self.speed
 
             # Wrap-around the screen
+            self.x %= WIDTH
+            self.y %= HEIGHT
+
+            return
+
+        nearby_predator = None
+        for other in birds:
+            if other.predator and self != other and self.distance_to(other) < self.radius:
+                nearby_predator = other
+                break
+
+        if nearby_predator:
+            # Fly in the opposite direction of the predator
+            angle_to_predator = math.atan2(self.y - nearby_predator.y, self.x - nearby_predator.x)
+
+            dangle = angle_to_predator - self.angle
+            dspeed = MAX_SPEED
+
+            self.speed = min(self.speed + dspeed * DELTA_T, MAX_SPEED + 1)
+            self.angle += dangle * DELTA_T
+            self.angle += self.normalize_angle(dangle * DELTA_T)
+
+            self.x += math.cos(self.angle) * self.speed
+            self.y += math.sin(self.angle) * self.speed
+
             self.x %= WIDTH
             self.y %= HEIGHT
 
