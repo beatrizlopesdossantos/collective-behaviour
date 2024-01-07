@@ -35,3 +35,21 @@ It is a model without spacial representation and collision, meaning that it does
 - Analyze metrics for different parameters
 - Compare emergent behaviors to paper
 - Write the final report with every detailed processe and results
+
+## Goals
+- Recreate the model
+- Implement the raycast vision
+- Add predator simulation
+
+We were able to implement all of the goals 
+
+## Instructions
+To run the model without the predator, go to simulation.py and run on the terminal:
+
+`python3 simulation.py
+`    
+
+To run the model with the predator, go to simulation_with_predator.py and run on the terminal:
+
+`python3 simulation_with_predator.py
+`    
