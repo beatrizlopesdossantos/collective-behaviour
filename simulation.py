@@ -58,6 +58,13 @@ class Bird:
             self.x %= WIDTH
             self.y %= HEIGHT
 
+            dynamic_tail_length = int(self.speed / MAX_SPEED * MAX_TAIL_LENGTH)
+            self.tail.insert(0, (self.x, self.y))
+
+            # Remove the last tail point if the tail is too long
+            if len(self.tail) > dynamic_tail_length:
+                self.tail.pop()
+
             return
 
         nearby_predator = None
@@ -82,6 +89,14 @@ class Bird:
 
             self.x %= WIDTH
             self.y %= HEIGHT
+
+            dynamic_tail_length = int(self.speed / MAX_SPEED * MAX_TAIL_LENGTH)
+            self.tail.insert(0, (self.x, self.y))
+
+            # Remove the last tail point if the tail is too long
+            if len(self.tail) > dynamic_tail_length:
+                self.tail.pop()
+
 
             return
 
