@@ -16,7 +16,7 @@ BETA_0 = 0.001 # Angular velocity coefficient for alignment
 ALPHA_1 = 0.08 # Acceleration coefficient for adapting to spatial gradient velocity 
 BETA_1 = 0.08 # Angular velocity coefficient for adapting to the angular gradient 
 MAX_SPEED = 5
-MAX_TAIL_LENGTH = 35
+MAX_TAIL_LENGTH = 15
 
 
 class Bird:
@@ -26,7 +26,7 @@ class Bird:
         self.v = 2 # Initial velocity
         self.angle = random.uniform(0, 2 * math.pi)
         self.bl = BL
-        self.radius = 200
+        self.radius = HEIGHT / 6 # Radius of the bird's perception, predator has larger radius
         self.speed = 2  # Initial speed
         self.tail = []
         self.predator = False
@@ -35,19 +35,25 @@ class Bird:
     def update(self, birds):
 
         if self.predator:
-            avg_position = [sum(other.x for other in birds) / len(birds),
-                            sum(other.y for other in birds) / len(birds)]
+
+            nearby_birds = [other for other in birds if other != self and self.distance_to(other) < 2 * self.radius]
+            
+            if not nearby_birds:
+                nearby_birds = birds[0]
+
+            avg_position = [sum(other.x for other in nearby_birds) / len(nearby_birds),
+                            sum(other.y for other in nearby_birds) / len(nearby_birds)]
 
             # Compute the direction towards the centroid
             angle_to_centroid = math.atan2(avg_position[1] - self.y, avg_position[0] - self.x)
 
             # Adjust the direction and speed to move towards the centroid
             dangle = BETA_1 * (angle_to_centroid - self.angle)
-            dspeed = ALPHA_1 * (MAX_SPEED - self.speed)
+            dspeed = ALPHA_1 * (MAX_SPEED + 3 - self.speed)
 
             # Cap the speed to a maximum value to maintain control
-            self.speed = min(self.speed + dspeed * DELTA_T, MAX_SPEED + 1)
-            self.angle += dangle * DELTA_T
+            self.speed = min(self.speed + dspeed * DELTA_T, MAX_SPEED + 3)
+            self.angle += dangle * DELTA_T * 4 # Predator turns faster
             self.angle += self.normalize_angle(dangle * DELTA_T)
 
             # Update position with the adjusted speed and angle
