@@ -29,9 +29,37 @@ class Bird:
         self.radius = 1000
         self.speed = 2  # Initial speed
         self.tail = []
+        self.predator = False
 
 
     def update(self, birds):
+
+        if self.predator:
+            avg_position = [sum(other.x for other in birds) / len(birds),
+                            sum(other.y for other in birds) / len(birds)]
+
+            # Compute the direction towards the centroid
+            angle_to_centroid = math.atan2(avg_position[1] - self.y, avg_position[0] - self.x)
+
+            # Adjust the direction and speed to move towards the centroid
+            dangle = BETA_1 * (angle_to_centroid - self.angle)
+            dspeed = ALPHA_1 * (MAX_SPEED - self.speed)
+
+            # Cap the speed to a maximum value to maintain control
+            self.speed = min(self.speed + dspeed * DELTA_T, MAX_SPEED)
+            self.angle += dangle * DELTA_T
+            self.angle += self.normalize_angle(dangle * DELTA_T)
+
+            # Update position with the adjusted speed and angle
+            self.x += math.cos(self.angle) * self.speed
+            self.y += math.sin(self.angle) * self.speed
+
+            # Wrap-around the screen
+            self.x %= WIDTH
+            self.y %= HEIGHT
+
+            return
+
         # Initialize the change in speed and heading
         dspeed = 0
         dangle = 0
@@ -150,7 +178,11 @@ class Bird:
 
     def draw(self, screen):
         # Draw bird as a circle with radius = BL / 2
-        pygame.draw.circle(screen, BIRD_COLOR, (int(self.x), int(self.y)), self.bl // 2)
+        bird_color = BIRD_COLOR
+        if self.predator:
+            bird_color = (255, 0, 0)  # Draw predator in red
+
+        pygame.draw.circle(screen, bird_color, (int(self.x), int(self.y)), self.bl // 2)
 
 # Set up the Pygame screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -170,7 +202,7 @@ for _ in range(NUM_BIRDS):
             break
 
     birds.append(Bird(new_x, new_y))
-# birds = [Bird(random.randint(0, WIDTH), random.randint(0, HEIGHT)) for _ in range(NUM_BIRDS)]
+birds[-1].predator = True
 
 running = True
 clock = pygame.time.Clock()
