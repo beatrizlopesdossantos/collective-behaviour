@@ -8,6 +8,9 @@
 - [Ricardo Ferreira](https://github.com/rickyfer305)
 - [Tomas Marek](https://github.com/realkuresryzi)
 
+## Presentation
+[Canva presentation](https://www.canva.com/design/DAF5MPtnm1A/xUs_hnICXeDpUTCL1cy6gQ/view?utm_content=DAF5MPtnm1A&utm_campaign=designshare&utm_medium=link&utm_source=editor)
+
 ## Paper to be explored
 ### [A model of collective behavior based purely on vision](https://www.science.org/doi/10.1126/sciadv.aay0792)
 
